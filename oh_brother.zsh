@@ -56,7 +56,7 @@ ink4_src=${ink4_src_tgz%.tar.gz}
 [[ -e $ink4_src_tgz ]] || curl -LO $ink4_src_tgz_url
 
 cups_src_tgz="cupswrapper${model_lower}_src-${version}.tar.gz"
-cups_src=${cups_src_tgz%.tar.gz}
+cups_src="cupswrapper${model_lower}_src"
 
 [[ -e $cups_src_tgz ]] || tar --extract --file=$ink4_src_tgz ${ink4_src}/${cups_src_tgz}
 [[ -e ${ink4_src}/${cups_src_tgz} ]] && mv ${ink4_src}/${cups_src_tgz} .
