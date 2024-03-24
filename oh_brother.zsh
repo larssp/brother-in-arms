@@ -31,12 +31,16 @@ EOF
 
 model=${1:-HL-4570CDW}
 model_clean=${${model/-/}:l}
+model_lower=$(echo $model_clean | awk '{print tolower($0)}')
 
 model_info=$(curl -L http://www.brother.com/pub/bsc/linux/infs/${model_clean:u})
 
 PRN_CUP_DEB=$(echo $model_info | awk -F= '/PRN_CUP_DEB/ {print $2}')
 PRN_LPD_DEB=$(echo $model_info | awk -F= '/PRN_LPD_DEB/ {print $2}')
-version=${${PRN_CUP_DEB/*cdwcupswrapper-/}%.i386.deb}
+version=${${PRN_CUP_DEB/*cupswrapper-/}%.i386.deb}
+
+echo model = $model_lower
+echo version = $version
 
 build_root="$(pwd)/build_${model_clean}"
 [[ "$clean" && -d "$build_root" ]] && rm -rf "$build_root"
@@ -46,10 +50,16 @@ cd $build_root
 
 dl_base="https://www.brother.com/pub/bsc/linux/dlf/"
 
-cups_src_tgz_url="${dl_base}/${model_clean}cupswrapper-src-${version}.tar.gz"
-cups_src_tgz=${cups_src_tgz_url:t}
+ink4_src_tgz_url="https://download.brother.com/welcome/dlf006678/brcups_ink4_src_1.1.2-x.tar.gz"
+ink4_src_tgz=${ink4_src_tgz_url:t}
+ink4_src=${ink4_src_tgz%.tar.gz}
+[[ -e $ink4_src_tgz ]] || curl -LO $ink4_src_tgz_url
+
+cups_src_tgz="cupswrapper${model_lower}_src-${version}.tar.gz"
 cups_src=${cups_src_tgz%.tar.gz}
-[[ -e $cups_src_tgz ]] || curl -LO $cups_src_tgz_url
+
+[[ -e $cups_src_tgz ]] || tar --extract --file=$ink4_src_tgz ${ink4_src}/${cups_src_tgz}
+[[ -e ${ink4_src}/${cups_src_tgz} ]] && mv ${ink4_src}/${cups_src_tgz} .
 [[ -d $cups_src ]] && rm -rf $cups_src
 
 lpr_deb_url="$dl_base/$PRN_LPD_DEB"
@@ -99,6 +109,8 @@ cd $build_root
 # Grab and extract the brcupsconfig4 sources
 tar zxvf $cups_src_tgz
 cd $cups_src
+
+[[ -d brcupsconfigpt1 ]] && mv brcupsconfigpt1 brcupsconfig
 
 # Compile brcupsconfig4
 gcc brcupsconfig/brcupsconfig.c -o brcupsconfig4
